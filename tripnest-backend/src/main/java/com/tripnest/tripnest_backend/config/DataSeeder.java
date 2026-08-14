@@ -1,7 +1,9 @@
 package com.tripnest.tripnest_backend.config;
  
+import com.tripnest.tripnest_backend.entity.Destination;
 import com.tripnest.tripnest_backend.entity.Role;
 import com.tripnest.tripnest_backend.entity.User;
+import com.tripnest.tripnest_backend.repository.DestinationRepository;
 import com.tripnest.tripnest_backend.repository.RoleRepository;
 import com.tripnest.tripnest_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ public class DataSeeder implements CommandLineRunner {
  
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
+    private final DestinationRepository destinationRepository;
     private final PasswordEncoder passwordEncoder;
  
     private static final List<String> DEFAULT_ROLES = List.of("TRAVELER", "GROUP_ADMIN", "ADMINISTRATOR");
@@ -32,6 +35,8 @@ public class DataSeeder implements CommandLineRunner {
                 roleRepository.save(role);
             }
         });
+ 
+        seedDestinations();
  
         // Guard: if the seeded admin already exists, stop here.
         // This is the ONLY place in the entire codebase that creates an
@@ -50,5 +55,15 @@ public class DataSeeder implements CommandLineRunner {
         admin.setRole(adminRole);
         admin.setOauthGoogle(false);
         userRepository.save(admin);
+    }
+ 
+    private void seedDestinations() {
+        if (destinationRepository.count() == 0) {
+            destinationRepository.save(new Destination(null, "Paris", "France", "City of Light and iconic Eiffel Tower", "Sunny 22°C", true));
+            destinationRepository.save(new Destination(null, "Bali", "Indonesia", "Tropical paradise with beaches and temples", "Tropical 29°C", true));
+            destinationRepository.save(new Destination(null, "Tokyo", "Japan", "Vibrant metropolis blending tradition and future", "Clear 19°C", true));
+            destinationRepository.save(new Destination(null, "Rome", "Italy", "Historic capital with Ancient Colosseum", "Warm 26°C", false));
+            destinationRepository.save(new Destination(null, "New York", "USA", "The city that never sleeps", "Breezy 21°C", false));
+        }
     }
 }
