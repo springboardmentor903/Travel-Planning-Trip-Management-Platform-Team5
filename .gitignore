@@ -1,0 +1,12 @@
+# macOS system files
+.DS_Store
+**/.DS_Store
+
+# IDE configuration files
+.idea/
+*.iml
+
+# Node / Build artifacts
+node_modules/
+target/
+.next/
