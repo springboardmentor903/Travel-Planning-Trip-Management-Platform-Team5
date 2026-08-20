@@ -2,10 +2,13 @@ package com.tripnest.tripnest_backend.service;
 
 import com.tripnest.tripnest_backend.entity.Itinerary;
 import com.tripnest.tripnest_backend.entity.Trip;
+import com.tripnest.tripnest_backend.entity.User;
 import com.tripnest.tripnest_backend.repository.ItineraryRepository;
 import com.tripnest.tripnest_backend.repository.TripRepository;
+import com.tripnest.tripnest_backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -13,36 +16,71 @@ public class ItineraryService {
 
     private final ItineraryRepository itineraryRepository;
     private final TripRepository tripRepository;
+    private final UserRepository userRepository;
 
     public ItineraryService(
             ItineraryRepository itineraryRepository,
-            TripRepository tripRepository) {
+            TripRepository tripRepository,
+            UserRepository userRepository) {
+
         this.itineraryRepository = itineraryRepository;
         this.tripRepository = tripRepository;
+        this.userRepository = userRepository;
     }
 
-    public List<Itinerary> getAllItineraries() {
-        return itineraryRepository.findAll();
+    // Get only itineraries belonging to the logged-in user's trips
+    public List<Itinerary> getAllItineraries(String userEmail) {
+
+        User user = getUserByEmail(userEmail);
+
+        return itineraryRepository.findAll()
+                .stream()
+                .filter(itinerary ->
+                        itinerary.getTrip()
+                                .getOwner()
+                                .getId()
+                                .equals(user.getId()))
+                .toList();
     }
 
-    public Itinerary getItineraryById(Integer id) {
-        return itineraryRepository.findById(id)
+    // Get one itinerary only if user owns its trip
+    public Itinerary getItineraryById(
+            Integer id,
+            String userEmail) {
+
+        Itinerary itinerary = itineraryRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Itinerary not found with id: " + id));
+                        new RuntimeException(
+                                "Itinerary not found with id: " + id));
+
+        verifyOwnership(itinerary.getTrip(), userEmail);
+
+        return itinerary;
     }
 
-    public List<Itinerary> getItinerariesByTripId(Integer tripId) {
-        return itineraryRepository.findByTripIdOrderByDayNumberAsc(tripId);
+    // Get itineraries for a trip only if user owns that trip
+    public List<Itinerary> getItinerariesByTripId(
+            Integer tripId,
+            String userEmail) {
+
+        Trip trip = getTripById(tripId);
+
+        verifyOwnership(trip, userEmail);
+
+        return itineraryRepository
+                .findByTripIdOrderByDayNumberAsc(tripId);
     }
 
+    // Create itinerary only for user's own trip
     public Itinerary createItinerary(
             Integer tripId,
             Integer dayNumber,
-            java.time.LocalDate dayDate) {
+            LocalDate dayDate,
+            String userEmail) {
 
-        Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() ->
-                        new RuntimeException("Trip not found with id: " + tripId));
+        Trip trip = getTripById(tripId);
+
+        verifyOwnership(trip, userEmail);
 
         Itinerary itinerary = Itinerary.builder()
                 .trip(trip)
@@ -53,12 +91,15 @@ public class ItineraryService {
         return itineraryRepository.save(itinerary);
     }
 
+    // Update only user's own itinerary
     public Itinerary updateItinerary(
             Integer id,
             Integer dayNumber,
-            java.time.LocalDate dayDate) {
+            LocalDate dayDate,
+            String userEmail) {
 
-        Itinerary itinerary = getItineraryById(id);
+        Itinerary itinerary =
+                getItineraryById(id, userEmail);
 
         itinerary.setDayNumber(dayNumber);
         itinerary.setDayDate(dayDate);
@@ -66,8 +107,54 @@ public class ItineraryService {
         return itineraryRepository.save(itinerary);
     }
 
-    public void deleteItinerary(Integer id) {
-        Itinerary itinerary = getItineraryById(id);
+    // Delete only user's own itinerary
+    public void deleteItinerary(
+            Integer id,
+            String userEmail) {
+
+        Itinerary itinerary =
+                getItineraryById(id, userEmail);
+
         itineraryRepository.delete(itinerary);
+    }
+
+    private User getUserByEmail(String email) {
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "User not found: " + email));
+    }
+
+    private Trip getTripById(Integer id) {
+
+        return tripRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Trip not found with id: " + id));
+    }
+
+    private void verifyOwnership(
+            Trip trip,
+            String userEmail) {
+
+        User user = getUserByEmail(userEmail);
+
+        // Owner can access
+        if (trip.getOwner()
+                .getId()
+                .equals(user.getId())) {
+            return;
+        }
+
+        // Administrator can access
+        if (user.getRole() != null &&
+                "ADMINISTRATOR".equals(
+                        user.getRole().getName())) {
+            return;
+        }
+
+        throw new RuntimeException(
+                "You do not have permission to access this itinerary");
     }
 }

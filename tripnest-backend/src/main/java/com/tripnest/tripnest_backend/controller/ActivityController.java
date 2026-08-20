@@ -4,6 +4,7 @@ import com.tripnest.tripnest_backend.entity.Activity;
 import com.tripnest.tripnest_backend.service.ActivityService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -17,32 +18,44 @@ public class ActivityController {
 
     private final ActivityService activityService;
 
-    public ActivityController(ActivityService activityService) {
+    public ActivityController(
+            ActivityService activityService) {
+
         this.activityService = activityService;
     }
 
     @GetMapping
-    public ResponseEntity<List<Activity>> getAllActivities() {
+    public ResponseEntity<List<Activity>> getAllActivities(
+            Authentication authentication) {
+
         return ResponseEntity.ok(
-                activityService.getAllActivities()
+                activityService.getAllActivities(
+                        authentication.getName())
         );
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Activity> getActivityById(
-            @PathVariable Integer id) {
+            @PathVariable Integer id,
+            Authentication authentication) {
 
         return ResponseEntity.ok(
-                activityService.getActivityById(id)
+                activityService.getActivityById(
+                        id,
+                        authentication.getName())
         );
     }
 
     @GetMapping("/itinerary/{itineraryId}")
-    public ResponseEntity<List<Activity>> getActivitiesByItinerary(
-            @PathVariable Integer itineraryId) {
+    public ResponseEntity<List<Activity>>
+    getActivitiesByItinerary(
+            @PathVariable Integer itineraryId,
+            Authentication authentication) {
 
         return ResponseEntity.ok(
-                activityService.getActivitiesByItineraryId(itineraryId)
+                activityService.getActivitiesByItineraryId(
+                        itineraryId,
+                        authentication.getName())
         );
     }
 
@@ -51,18 +64,23 @@ public class ActivityController {
             @RequestParam Integer itineraryId,
             @RequestParam String activityType,
             @RequestParam String name,
-            @RequestParam(required = false) LocalTime startTime,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) BigDecimal cost) {
+            @RequestParam(required = false)
+            LocalTime startTime,
+            @RequestParam(required = false)
+            String location,
+            @RequestParam(required = false)
+            BigDecimal cost,
+            Authentication authentication) {
 
-        Activity activity = activityService.createActivity(
-                itineraryId,
-                activityType,
-                name,
-                startTime,
-                location,
-                cost
-        );
+        Activity activity =
+                activityService.createActivity(
+                        itineraryId,
+                        activityType,
+                        name,
+                        startTime,
+                        location,
+                        cost,
+                        authentication.getName());
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -74,9 +92,13 @@ public class ActivityController {
             @PathVariable Integer id,
             @RequestParam String activityType,
             @RequestParam String name,
-            @RequestParam(required = false) LocalTime startTime,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) BigDecimal cost) {
+            @RequestParam(required = false)
+            LocalTime startTime,
+            @RequestParam(required = false)
+            String location,
+            @RequestParam(required = false)
+            BigDecimal cost,
+            Authentication authentication) {
 
         return ResponseEntity.ok(
                 activityService.updateActivity(
@@ -85,16 +107,19 @@ public class ActivityController {
                         name,
                         startTime,
                         location,
-                        cost
-                )
+                        cost,
+                        authentication.getName())
         );
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteActivity(
-            @PathVariable Integer id) {
+            @PathVariable Integer id,
+            Authentication authentication) {
 
-        activityService.deleteActivity(id);
+        activityService.deleteActivity(
+                id,
+                authentication.getName());
 
         return ResponseEntity.noContent().build();
     }
