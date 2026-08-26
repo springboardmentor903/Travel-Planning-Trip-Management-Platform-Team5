@@ -2,55 +2,34 @@ package com.tripnest.tripnest_backend.controller;
 
 import com.tripnest.tripnest_backend.entity.Budget;
 import com.tripnest.tripnest_backend.service.BudgetService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/budgets")
 @CrossOrigin(origins = "http://localhost:5173")
-@RequiredArgsConstructor
 public class BudgetController {
 
     private final BudgetService budgetService;
 
-    @GetMapping
-    public ResponseEntity<List<Budget>> getAllBudgets() {
-        return ResponseEntity.ok(
-                budgetService.getAllBudgets()
-        );
+    public BudgetController(BudgetService budgetService) {
+        this.budgetService = budgetService;
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Budget> getBudgetById(
-            @PathVariable Integer id) {
-
-        return ResponseEntity.ok(
-                budgetService.getBudgetById(id)
-        );
-    }
-
-    @GetMapping("/trip/{tripId}")
-    public ResponseEntity<Budget> getBudgetByTrip(
-            @PathVariable Integer tripId) {
-
-        return ResponseEntity.ok(
-                budgetService.getBudgetByTripId(tripId)
-        );
-    }
-
+    // CREATE / SET BUDGET
     @PostMapping
     public ResponseEntity<Budget> createBudget(
             @RequestParam Integer tripId,
-            @RequestParam BigDecimal totalBudget) {
+            @RequestParam BigDecimal totalBudget,
+            @RequestParam(required = false, defaultValue = "USD") String currency) {
 
         Budget budget = budgetService.createBudget(
                 tripId,
-                totalBudget
+                totalBudget,
+                currency
         );
 
         return ResponseEntity
@@ -58,27 +37,31 @@ public class BudgetController {
                 .body(budget);
     }
 
+    // UPDATE BUDGET BY ID
     @PutMapping("/{id}")
     public ResponseEntity<Budget> updateBudget(
             @PathVariable Integer id,
             @RequestParam BigDecimal totalBudget,
-            @RequestParam BigDecimal totalSpent) {
+            @RequestParam(required = false) String currency,
+            @RequestParam(required = false) BigDecimal totalSpent) {
 
-        return ResponseEntity.ok(
-                budgetService.updateBudget(
-                        id,
-                        totalBudget,
-                        totalSpent
-                )
+        Budget budget = budgetService.updateBudget(
+                id,
+                totalBudget,
+                currency,
+                totalSpent
         );
+
+        return ResponseEntity.ok(budget);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBudget(
-            @PathVariable Integer id) {
+    // GET BUDGET BY TRIP
+    @GetMapping("/trip/{tripId}")
+    public ResponseEntity<Budget> getBudgetByTrip(
+            @PathVariable Integer tripId) {
 
-        budgetService.deleteBudget(id);
-
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                budgetService.getBudgetByTripId(tripId)
+        );
     }
 }

@@ -1,29 +1,55 @@
 package com.tripnest.tripnest_backend.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "budgets")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Budget {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @OneToOne
-    @JoinColumn(name = "trip_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "trip_id",
+            nullable = false,
+            unique = true
+    )
     private Trip trip;
 
-    @Column(nullable = false, precision = 12, scale = 2)
+    @Column(
+            name = "total_budget",
+            nullable = false,
+            precision = 12,
+            scale = 2
+    )
     private BigDecimal totalBudget;
 
-    @Column(precision = 12, scale = 2)
+    @Column(
+            name = "total_spent",
+            precision = 12,
+            scale = 2
+    )
     private BigDecimal totalSpent;
 
-    @Column(precision = 12, scale = 2)
+    @Column(
+            name = "currency"
+    )
+    private String currency = "USD";
+
+    @Column(
+            name = "remaining_budget",
+            precision = 12,
+            scale = 2
+    )
     private BigDecimal remainingBudget;
 }
