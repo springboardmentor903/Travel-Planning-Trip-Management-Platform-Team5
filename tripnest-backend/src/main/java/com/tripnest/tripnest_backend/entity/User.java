@@ -34,6 +34,15 @@ public class User {
     @Column(name = "oauth_google")
     private Boolean oauthGoogle = false;
  
+    @Column(name = "bio", columnDefinition = "TEXT")
+    private String bio;
+ 
+    @Column(name = "travel_preferences", columnDefinition = "TEXT")
+    private String travelPreferences;
+ 
+    @Column(name = "favorite_destinations", columnDefinition = "TEXT")
+    private String favoriteDestinations;
+ 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
  

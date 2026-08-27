@@ -55,6 +55,21 @@ public class DataSeeder implements CommandLineRunner {
         admin.setRole(adminRole);
         admin.setOauthGoogle(false);
         userRepository.save(admin);
+ 
+        if (!userRepository.existsByEmail("user@tripnest.com")) {
+            Role travelerRole = roleRepository.findByName("TRAVELER")
+                    .orElseThrow(() -> new RuntimeException("TRAVELER role missing after seeding"));
+            User user = new User();
+            user.setName("Demo Traveler");
+            user.setEmail("user@tripnest.com");
+            user.setPasswordHash(passwordEncoder.encode("User@123"));
+            user.setRole(travelerRole);
+            user.setOauthGoogle(false);
+            user.setBio("Passionate explorer and travel enthusiast.");
+            user.setTravelPreferences("Adventure, Beach, Cultural, Budget");
+            user.setFavoriteDestinations("Paris, Bali, Tokyo");
+            userRepository.save(user);
+        }
     }
  
     private void seedDestinations() {
