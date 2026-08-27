@@ -1,5 +1,5 @@
 package com.tripnest.tripnest_backend.service;
- 
+
 import com.tripnest.tripnest_backend.dto.AuthResponse;
 import com.tripnest.tripnest_backend.dto.LoginRequest;
 import com.tripnest.tripnest_backend.dto.RegisterRequest;
@@ -54,21 +54,98 @@ public class UserService {
 
     public AuthResponse loginUser(LoginRequest request) {
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
+        System.out.println("========== LOGIN DEBUG ==========");
+        System.out.println("Email received: " + request.getEmail());
+        System.out.println("Password received: " + request.getPassword());
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new BadCredentialsException("Invalid email or password");
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> {
+                    System.out.println("❌ USER NOT FOUND");
+                    return new BadCredentialsException(
+                            "Invalid email or password");
+                });
+
+        System.out.println("✅ USER FOUND: " + user.getEmail());
+        System.out.println("Stored password hash: " + user.getPasswordHash());
+
+        boolean passwordMatches = passwordEncoder.matches(
+                request.getPassword(),
+                user.getPasswordHash()
+        );
+
+        System.out.println("Password matches: " + passwordMatches);
+
+        if (!passwordMatches) {
+            System.out.println("❌ PASSWORD DOES NOT MATCH");
+            throw new BadCredentialsException(
+                    "Invalid email or password");
         }
- 
+
+        System.out.println("✅ PASSWORD MATCHED");
+
         String token = jwtUtil.generateToken(user.getEmail());
- 
+
+        System.out.println("✅ JWT GENERATED");
+        System.out.println("=================================");
+
         return new AuthResponse(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
                 "Login successful",
                 token
+        );
+    }
+
+    public com.tripnest.tripnest_backend.dto.UserProfileDto getUserProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+        return mapToProfileDto(user);
+    }
+
+    public com.tripnest.tripnest_backend.dto.UserProfileDto updateUserProfile(String email, com.tripnest.tripnest_backend.dto.UserProfileDto request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+
+        if (request.getName() != null && !request.getName().isBlank()) {
+            user.setName(request.getName());
+        }
+        if (request.getBio() != null) {
+            user.setBio(request.getBio());
+        }
+        if (request.getTravelPreferences() != null) {
+            user.setTravelPreferences(request.getTravelPreferences());
+        }
+        if (request.getFavoriteDestinations() != null) {
+            user.setFavoriteDestinations(request.getFavoriteDestinations());
+        }
+
+        User updated = userRepository.save(user);
+        return mapToProfileDto(updated);
+    }
+
+    public void changePassword(String email, com.tripnest.tripnest_backend.dto.ChangePasswordRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new BadCredentialsException("Current password does not match");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    private com.tripnest.tripnest_backend.dto.UserProfileDto mapToProfileDto(User user) {
+        return new com.tripnest.tripnest_backend.dto.UserProfileDto(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole() != null ? user.getRole().getName() : "TRAVELER",
+                user.getBio(),
+                user.getTravelPreferences(),
+                user.getFavoriteDestinations(),
+                user.getCreatedAt()
         );
     }
 }

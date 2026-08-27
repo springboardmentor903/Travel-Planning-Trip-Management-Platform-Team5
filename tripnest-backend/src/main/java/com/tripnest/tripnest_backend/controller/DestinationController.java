@@ -20,8 +20,18 @@ public class DestinationController {
         return ResponseEntity.ok(destinationService.getAllDestinations());
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<DestinationResponse>> searchDestinations(@RequestParam(required = false) String query) {
+        return ResponseEntity.ok(destinationService.searchDestinations(query));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<DestinationResponse> getDestinationById(@PathVariable Integer id) {
         return ResponseEntity.ok(destinationService.getDestinationById(id));
+    }
+
+    @GetMapping("/{id}/weather")
+    public ResponseEntity<com.tripnest.tripnest_backend.dto.WeatherDto> getWeather(@PathVariable Integer id) {
+        return ResponseEntity.ok(destinationService.getWeatherForDestination(id));
     }
 }
