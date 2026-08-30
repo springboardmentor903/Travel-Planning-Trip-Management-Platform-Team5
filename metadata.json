@@ -1,0 +1,6 @@
+{
+  "name": "Travel Planner & Expense Tracker",
+  "description": "Full-stack Travel Planner & Expense Management platform with trip itineraries, budget tracking, expense analytics, weather forecasts, and AI-powered recommendations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
